@@ -1,0 +1,5 @@
+test/*.c
+test/*.h
+.mypy_cache/
+*.code-workspace
+github.com:thomedes/PlantUML-Lark-EBNF.git

@@ -1,0 +1,3 @@
+[submodule "PlantUML-Lark-EBNF"]
+	path = PlantUML-Lark-EBNF
+	url = https://github.com/thomedes/PlantUML-Lark-EBNF.git

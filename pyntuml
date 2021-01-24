@@ -1,0 +1,76 @@
+#! /usr/bin/env python3
+
+from typing import List
+
+import sys
+import os
+
+import lark
+import pystache  # type: ignore
+
+
+class FSM:
+    def __init__(self, tree: lark.Tree):
+        self._fsm = {
+            "fsm_name": "fsm",
+            "states": [ 
+                { "name": "init" }, 
+                { "name": "start" }, 
+                { "name": "run" }, 
+            ],
+            "events": [ 
+                { "name": "READY" }, 
+                { "name": "ERROR" }, 
+                { "name": "STOP" }, 
+            ]
+        }
+        self._tree = tree
+
+    def compile(self) -> None:
+        pass
+
+    def _enum_and_names(self, file, type_name: str, items: List[str]) -> None:
+        name = "%s_%s" % (self._fsm["name"], type_name)
+        for line in (
+            "typedef enum %s_e {" % name,
+            "\n".join("    %s," % i for i in items),
+            "}   %s_t;" % name,
+            "",
+            "static const char *%s_name[] = {" % name,
+            "};",
+            "",
+        ):
+            file.write(line + "\n")
+
+    def output(self, c_file: str, h_file: str) -> None:
+        self._render("template/fsm.template.c", c_file)
+        self._render("template/fsm.template.h", h_file)
+
+    def _render(self, template_name: str, file_name: str) -> None:
+        template = _slurp(template_name)
+
+        with open(file_name, "wt") as file:
+            file.write(pystache.render(template, self._fsm))
+
+
+def _slurp(file: str, text_mode: bool = False) -> str:
+    with open(file, "r" + ("t" if text_mode else "b")) as f:
+        return f.read().decode()
+
+
+def main(argv: List[str]) -> int:
+    (input_file, c_file, h_file) = argv[1:]
+
+    grammar = _slurp("PlantUML-Lark-EBNF/plantuml.ebnf")
+    parser = lark.Lark(grammar)
+
+    source = _slurp(input_file)
+    tree = parser.parse(source)
+    fsm = FSM(tree)
+    fsm.compile()
+    fsm.output(c_file, h_file)
+
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

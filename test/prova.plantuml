@@ -1,0 +1,30 @@
+@startuml wifi
+[*] --> init
+init: **entry** / wifi_init();
+init --> run : READY
+init --> [*] : ERROR
+init --> [*] : STOP
+
+state run {
+    [*] -> start
+    start: **entry** / chk_config();
+    start --> connect : OK
+    start -> bad_config : KO
+
+    bad_config -left-> start: CONFIG_CHANGED
+
+    connect -> idle : DISCONNECT
+    connect --> start: CONFIG_CHANGED
+	idle -up-> start : CONNECT
+
+	state connect {
+        [*] --> connected
+        connected: **entry** / connect();
+        connected: **exit** / disconnect();
+        connected -> reconnect : FAIL
+        connected -> reconnect : DISCONNECTED
+        reconnect -left-> connected : after: 5 seconds
+    }
+}
+run --> [*] : STOP
+@enduml
